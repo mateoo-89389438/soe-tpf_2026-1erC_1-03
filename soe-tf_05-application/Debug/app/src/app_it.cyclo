@@ -1,0 +1,2 @@
+../app/src/app_it.c:58:6:app_it_init	1
+../app/src/app_it.c:68:6:HAL_SPI_TxCpltCallback	3
