@@ -1,4 +1,4 @@
-| Actividad | Memory pool | % de uso de la CPU | % de consumo de RAM | WCET [us] |
+| Actividad | Memory pool | % de uso de la CPU | % de consumo de RAM | WCET [µs] |
 | :--- | :---: | :---: | :---: | :---: |
 | 01: Device Driver - Transmisión (Polling & Gatekeeper Task) | No | < 1 | 37.58 | 16 |
 | 02: Device Driver - Transmisión (Memory Pool & Polling & Gatekeeper Task) | Si | < 1 | 37.58 | 12 |
