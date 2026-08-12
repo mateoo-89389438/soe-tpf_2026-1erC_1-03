@@ -19,7 +19,8 @@
 #define SPI_TIMEOUT_MS  (pdMS_TO_TICKS(1000ul))
 
 /********************** internal data declaration ****************************/
-const char *p_task_gatekeeper_transmission_succesful = "   ==> Gatekeeper: SPI transmission successful";
+const char *p_task_gatekeeper_transmission_succesful = "   ==> Gatekeeper: SPI Tx Complete";
+const char *p_task_gatekeeper_timeout 				 = "   ==> Gatekeeper: SPI Tx Timeout";
 
 /********************** internal functions declaration ***********************/
 
@@ -34,8 +35,11 @@ extern QueueHandle_t h_queue_spi;
 /********************** external functions definition ************************/
 void task_gatekeeper(void *parameters)
 {
+	/*  Declare & Initialize Task Function variables */
     s_spi_msg_t spi_msg;
 
+    /* Print out: Task Initialized */
+	LOGGER_INFO(" ");
     LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
     for (;;)

@@ -44,6 +44,9 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app.h"
+#include "app_it.h"
+#include "task_gatekeeper.h"
+
 
 /********************** macros and definitions *******************************/
 #define G_TASK_A_CNT_INI	0ul
@@ -78,21 +81,25 @@ void task_a(void *parameters)
 		/* Update Task Counter */
 		g_task_a_cnt++;
 
-		/* 1. Solicitar memoria del Memory Pool (Heap 4 en FreeRTOS) */
+		/* Memory Pool */
 		uint8_t *p_data = (uint8_t *) pvPortMalloc(4 * sizeof(uint8_t));
 
 		if (p_data != NULL)
 		{
-			/* 2. Cargar comando de prueba para la W25Q32 (ej: Leer JEDEC ID) */
-			p_data[0] = 0x9F; /* Comando JEDEC ID */
+
+			p_data[0] = 0x9F; /* JEDEC ID */
 			p_data[1] = 0x00; /* Dummy byte */
 			p_data[2] = 0x00; /* Dummy byte */
 			p_data[3] = 0x00; /* Dummy byte */
 
-			/* 3. Enviar el PUNTERO a la cola de la Gatekeeper */
-			if (xQueueSend(h_queue_spi, &p_data, portMAX_DELAY) != pdPASS)
+			/* Prepare structure to send */
+			s_spi_msg_t spi_msg;
+			spi_msg.p_data = p_data;
+			spi_msg.size = 4;
+
+			if (xQueueSend(h_queue_spi, (void *)&spi_msg, portMAX_DELAY) != pdPASS)
 			{
-				/* Si falla el envío por algún motivo, liberar la memoria para evitar memory leaks */
+				/* Prevent memory leaks */
 				vPortFree(p_data);
 			}
 		}

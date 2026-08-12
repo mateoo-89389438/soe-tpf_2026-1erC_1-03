@@ -46,6 +46,10 @@ extern "C" {
 #define TASK_QTY 2ul
 
 /********************** typedef **********************************************/
+typedef struct {
+    uint8_t *p_data;
+    uint16_t size;
+} s_spi_msg_t;
 
 /********************** external data declaration ****************************/
 extern uint32_t g_app_cnt;

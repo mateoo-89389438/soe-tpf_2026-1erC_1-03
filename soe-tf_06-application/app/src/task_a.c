@@ -52,6 +52,7 @@
 #define TASK_A_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
 /********************** internal data declaration ****************************/
+static uint8_t p_msg_a_data[] = {0x9F, 0x00, 0x00, 0x00};
 
 /********************** internal functions declaration ***********************/
 
@@ -61,18 +62,12 @@ const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
 
-static uint8_t g_spi_tx_buf_a[4] = {0x01, 0x02, 0x03, 0x04};
-static s_spi_msg_t g_msg_a;
-
 /********************** external functions definition ************************/
 /* Task thread */
 void task_a(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_a_cnt = G_TASK_A_CNT_INI;
-
-	g_msg_a.p_data = g_spi_tx_buf_a;
-	g_msg_a.size = sizeof(g_spi_tx_buf_a);
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -84,7 +79,13 @@ void task_a(void *parameters)
 		/* Update Task Counter */
 		g_task_a_cnt++;
 
-		xQueueSend(h_queue_spi, &g_msg_a, 0);
+		/* Prepare and send message to the Gatekeeper */
+		s_spi_msg_t spi_msg;
+		spi_msg.p_data = p_msg_a_data;
+		spi_msg.size = sizeof(p_msg_a_data);
+
+		/* Send to the queue */
+		xQueueSend(h_queue_spi, (void *)&spi_msg, portMAX_DELAY);
 
     	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_a_wait_250mS);

@@ -57,7 +57,7 @@
 
 /********************** internal data definition *****************************/
 static uint8_t g_task_b_tx_buffer[] = {0x01, 0x02, 0x03, 0x04};
-const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   250mS";
+const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;

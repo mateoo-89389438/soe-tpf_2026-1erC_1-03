@@ -1,0 +1,2 @@
+../app/src/app_it.c:69:6:app_it_init	4	static,ignoring_inline_asm
+../app/src/app_it.c:80:6:HAL_SPI_RxCpltCallback	32	static,ignoring_inline_asm

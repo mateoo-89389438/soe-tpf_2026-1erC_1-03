@@ -44,6 +44,9 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app.h"
+#include "app_it.h"
+#include "task_gatekeeper.h"
+
 
 /********************** macros and definitions *******************************/
 #define G_TASK_B_CNT_INI	0ul
@@ -56,20 +59,16 @@
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-//const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   250mS";
+const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
-extern SPI_HandleTypeDef hspi1;
-
-uint32_t g_t_tx_us = 0ul;
-uint32_t g_wcet_tx_us = 0ul;
 
 /********************** external functions definition ************************/
 /* Task thread */
 void task_b(void *parameters)
 {
-	/* Declare & Initialize Task Function variables */
+	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
 
 	/* Print out: Task Initialized */
@@ -78,40 +77,34 @@ void task_b(void *parameters)
 
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
-	{
-		uint8_t *p_received_data = NULL;
+    {
+		/* Update Task Counter */
+		g_task_b_cnt++;
 
-		/* Task blocks here until a pointer to the queue arrives. */
-		if (pdPASS == xQueueReceive(h_queue_spi, &p_received_data, portMAX_DELAY))
+		/* Memory Pool */
+		uint8_t *p_data = (uint8_t *) pvPortMalloc(4 * sizeof(uint8_t));
+
+		if (p_data != NULL)
 		{
-			/* Update Task Counter */
-			g_task_b_cnt++;
+			p_data[0] = 0x9F; /* JEDEC ID */
+			p_data[1] = 0x00; /* Dummy byte */
+			p_data[2] = 0x00; /* Dummy byte */
+			p_data[3] = 0x00; /* Dummy byte */
 
-			LOGGER_INFO("  ==> Task B (Gatekeeper): Transmitting packet over SPI...");
+			/* Prepare structure to send */
+			s_spi_msg_t spi_msg;
+			spi_msg.p_data = p_data;
+			spi_msg.size = 4;
 
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-
-			/* Reset the DWT cycle counter before transmitting */
-			cycle_counter_reset();
-
-			/* SPI transmission by Polling */
-			HAL_SPI_Transmit(&hspi1, p_received_data, 4, HAL_MAX_DELAY);
-
-			/* Get the elapsed time in us */
-			g_t_tx_us = cycle_counter_get_time_us();
-
-			/* CS to HIGH (Deselect memory) */
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-
-			/* Update WCET */
-			if (g_t_tx_us > g_wcet_tx_us)
+			if (xQueueSend(h_queue_spi, (void *)&spi_msg, portMAX_DELAY) != pdPASS)
 			{
-				g_wcet_tx_us = g_t_tx_us;
+				vPortFree(p_data);
 			}
-
-			/* Free the memory requested by the task */
-			vPortFree(p_received_data);
 		}
+
+    	/* Print out: Wait 250mS */
+		LOGGER_INFO(p_task_b_wait_250mS);
+		vTaskDelay(TASK_B_DEL_MAX);
 	}
 }
 

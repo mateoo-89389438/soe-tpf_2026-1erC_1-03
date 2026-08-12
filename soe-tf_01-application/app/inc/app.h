@@ -41,7 +41,6 @@ extern "C" {
 #endif
 
 /********************** inclusions *******************************************/
-#include "cmsis_os.h"
 
 /********************** macros ***********************************************/
 #define TASK_QTY 2ul
@@ -58,8 +57,9 @@ extern uint32_t g_app_task_cnt;
 extern volatile uint32_t g_app_tick_cnt;
 extern uint32_t g_task_idle_cnt;
 extern uint32_t g_app_stack_overflow_cnt;
-extern QueueHandle_t h_queue_spi;
+
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
+extern QueueHandle_t h_queue_spi;
 
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread

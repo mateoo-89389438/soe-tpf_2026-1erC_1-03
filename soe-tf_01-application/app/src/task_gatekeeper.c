@@ -18,13 +18,14 @@
 /********************** macros and definitions *******************************/
 
 /********************** internal data declaration ****************************/
-const char *p_task_gatekeeper_transmission_succesful = "   ==> Gatekeeper: SPI transmission successful";
+const char *p_task_gatekeeper_transmission_succesful = "   ==> Gatekeeper: SPI Tx Complete";
+const char *p_task_gatekeeper_timeout 				 = "   ==> Gatekeeper: SPI Tx Timeout";
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-static uint32_t g_t_tx_us = 0;
-static uint32_t g_wcet_tx_us = 0;
+static uint32_t g_t_tx_us = 0ul;
+static uint32_t g_wcet_tx_us = 0ul;
 
 /********************** external data declaration ****************************/
 extern SPI_HandleTypeDef hspi1;
@@ -33,8 +34,11 @@ extern QueueHandle_t h_queue_spi;
 /********************** external functions definition ************************/
 void task_gatekeeper(void *parameters)
 {
+	/*  Declare & Initialize Task Function variables */
     s_spi_msg_t rx_msg;
 
+    /* Print out: Task Initialized */
+	LOGGER_INFO(" ");
     LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
     for (;;)
@@ -51,11 +55,13 @@ void task_gatekeeper(void *parameters)
             /* Chip Select (CS) to HIGH in PA4 */
             HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
-            if (g_t_tx_us > g_wcet_tx_us) {
+            if (g_t_tx_us > g_wcet_tx_us)
+            {
                 g_wcet_tx_us = g_t_tx_us;
             }
 
             LOGGER_INFO(p_task_gatekeeper_transmission_succesful);
         }
+
     }
 }

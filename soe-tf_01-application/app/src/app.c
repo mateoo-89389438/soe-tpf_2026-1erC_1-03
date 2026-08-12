@@ -147,6 +147,7 @@ void app_init(void)
 					  NULL,								/* We are not using the task parameter. */
 					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 2. */
 					  &h_task_gatekeeper);				/* We are using a variable as task handle. */
+
 	/* Check the thread was created successfully. */
 	configASSERT(pdPASS == ret);
 

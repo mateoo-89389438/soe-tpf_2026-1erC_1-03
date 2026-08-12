@@ -7,45 +7,45 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00006bf0  08000110  08000110  00001110  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       000002dc  08006d00  08006d00  00007d00  2**2
+  2 .rodata       000002f4  08006d00  08006d00  00007d00  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08006fdc  08006fdc  0000808c  2**0
+  3 .ARM.extab    00000000  08006ff4  08006ff4  0000908c  2**0
                   CONTENTS, READONLY
-  4 .ARM          00000008  08006fdc  08006fdc  00007fdc  2**2
+  4 .ARM          00000008  08006ff4  08006ff4  00007ff4  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  08006fe4  08006fe4  0000808c  2**0
+  5 .preinit_array 00000000  08006ffc  08006ffc  0000908c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08006fe4  08006fe4  00007fe4  2**2
+  6 .init_array   00000004  08006ffc  08006ffc  00007ffc  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  7 .fini_array   00000004  08006fe8  08006fe8  00007fe8  2**2
+  7 .fini_array   00000004  08007000  08007000  00008000  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .data         0000008c  20000000  08006fec  00008000  2**2
+  8 .data         0000008c  20000000  08007004  00009000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          0000185c  2000008c  08007078  0000808c  2**2
+  9 .bss          0000185c  2000008c  08007090  0000908c  2**2
                   ALLOC
- 10 ._user_heap_stack 00000600  200018e8  08007078  000088e8  2**0
+ 10 ._user_heap_stack 00000600  200018e8  08007090  000098e8  2**0
                   ALLOC
- 11 .ARM.attributes 00000029  00000000  00000000  0000808c  2**0
+ 11 .ARM.attributes 00000029  00000000  00000000  0000908c  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00016c93  00000000  00000000  000080b5  2**0
+ 12 .debug_info   00016ca1  00000000  00000000  000090b5  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00003cc9  00000000  00000000  0001ed48  2**0
+ 13 .debug_abbrev 00003ccb  00000000  00000000  0001fd56  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00001530  00000000  00000000  00022a18  2**3
+ 14 .debug_aranges 00001530  00000000  00000000  00023a28  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_rnglists 0000105f  00000000  00000000  00023f48  2**0
+ 15 .debug_rnglists 0000105f  00000000  00000000  00024f58  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0001b96c  00000000  00000000  00024fa7  2**0
+ 16 .debug_macro  0001b96c  00000000  00000000  00025fb7  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0001a520  00000000  00000000  00040913  2**0
+ 17 .debug_line   0001a520  00000000  00000000  00041923  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00095eac  00000000  00000000  0005ae33  2**0
+ 18 .debug_str    00095ec6  00000000  00000000  0005be43  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000f0cdf  2**0
+ 19 .comment      00000043  00000000  00000000  000f1d09  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00005fcc  00000000  00000000  000f0d24  2**2
+ 20 .debug_frame  00005fcc  00000000  00000000  000f1d4c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 0000006e  00000000  00000000  000f6cf0  2**0
+ 21 .debug_line_str 0000006e  00000000  00000000  000f7d18  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1642,7 +1642,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  80008e0:	2000008c 	.word	0x2000008c
   ldr r2, =_sidata
- 80008e4:	08006fec 	.word	0x08006fec
+ 80008e4:	08007004 	.word	0x08007004
   ldr r2, =_sbss
  80008e8:	2000008c 	.word	0x2000008c
   ldr r4, =_ebss
@@ -4023,7 +4023,7 @@ if (((RCC_ClkInitStruct->ClockType) & RCC_CLOCKTYPE_PCLK1) == RCC_CLOCKTYPE_PCLK
  8001646:	bf00      	nop
  8001648:	40022000 	.word	0x40022000
  800164c:	40021000 	.word	0x40021000
- 8001650:	08006f5c 	.word	0x08006f5c
+ 8001650:	08006f74 	.word	0x08006f74
  8001654:	20000000 	.word	0x20000000
  8001658:	20000004 	.word	0x20000004
 
@@ -4158,8 +4158,8 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  80016ee:	bf00      	nop
  80016f0:	40021000 	.word	0x40021000
  80016f4:	007a1200 	.word	0x007a1200
- 80016f8:	08006f74 	.word	0x08006f74
- 80016fc:	08006f84 	.word	0x08006f84
+ 80016f8:	08006f8c 	.word	0x08006f8c
+ 80016fc:	08006f9c 	.word	0x08006f9c
  8001700:	003d0900 	.word	0x003d0900
 
 08001704 <HAL_RCC_GetHCLKFreq>:
@@ -4205,7 +4205,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8001734:	4618      	mov	r0, r3
  8001736:	bd80      	pop	{r7, pc}
  8001738:	40021000 	.word	0x40021000
- 800173c:	08006f6c 	.word	0x08006f6c
+ 800173c:	08006f84 	.word	0x08006f84
 
 08001740 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -4231,7 +4231,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  800175c:	4618      	mov	r0, r3
  800175e:	bd80      	pop	{r7, pc}
  8001760:	40021000 	.word	0x40021000
- 8001764:	08006f6c 	.word	0x08006f6c
+ 8001764:	08006f84 	.word	0x08006f84
 
 08001768 <HAL_RCC_GetClockConfig>:
   * contains the current clock configuration.
@@ -14899,7 +14899,7 @@ void app_init(void)
  8005020:	200015b4 	.word	0x200015b4
  8005024:	200015b8 	.word	0x200015b8
  8005028:	08006db4 	.word	0x08006db4
- 800502c:	08006f88 	.word	0x08006f88
+ 800502c:	08006fa0 	.word	0x08006fa0
  8005030:	08006dbc 	.word	0x08006dbc
  8005034:	200016dc 	.word	0x200016dc
  8005038:	08006dc0 	.word	0x08006dc0
@@ -15005,7 +15005,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
  80050de:	b084      	sub	sp, #16
  80050e0:	af00      	add	r7, sp, #0
  80050e2:	6078      	str	r0, [r7, #4]
-    /* Verificar que sea el SPI correcto */
+    /* Verify correct SPI*/
     if (hspi->Instance == SPI1)
  80050e4:	687b      	ldr	r3, [r7, #4]
  80050e6:	681b      	ldr	r3, [r3, #0]
@@ -15017,7 +15017,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
  80050ee:	2300      	movs	r3, #0
  80050f0:	60fb      	str	r3, [r7, #12]
 
-        /* Dar el semáforo desde la ISR */
+        /* Send message to the Gatekeeper Queue from ISR */
         xSemaphoreGiveFromISR(h_sem_spi_tx_end, &x_higher_priority_task_woken);
  80050f2:	4b0c      	ldr	r3, [pc, #48]	@ (8005124 <HAL_SPI_TxCpltCallback+0x48>)
  80050f4:	681b      	ldr	r3, [r3, #0]
@@ -15026,7 +15026,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
  80050fc:	4618      	mov	r0, r3
  80050fe:	f7fd fe3d 	bl	8002d7c <xQueueGiveFromISR>
 
-        /* Solicitar un cambio de contexto si la tarea despertada tiene mayor prioridad */
+        /* Context switch if a higher priority task was woken */
         portYIELD_FROM_ISR(x_higher_priority_task_woken);
  8005102:	68fb      	ldr	r3, [r7, #12]
  8005104:	2b00      	cmp	r3, #0
@@ -15218,7 +15218,7 @@ void task_a(void *parameters)
  800525a:	e7bd      	b.n	80051d8 <task_a+0x84>
  800525c:	200016e0 	.word	0x200016e0
  8005260:	08006e44 	.word	0x08006e44
- 8005264:	08006f88 	.word	0x08006f88
+ 8005264:	08006fa0 	.word	0x08006fa0
  8005268:	08006e4c 	.word	0x08006e4c
  800526c:	200016dc 	.word	0x200016dc
  8005270:	08006e50 	.word	0x08006e50
@@ -15373,7 +15373,7 @@ void task_b(void *parameters)
  8005392:	bf00      	nop
  8005394:	200016e4 	.word	0x200016e4
  8005398:	08006eb0 	.word	0x08006eb0
- 800539c:	08006f88 	.word	0x08006f88
+ 800539c:	08006fa0 	.word	0x08006fa0
  80053a0:	08006eb8 	.word	0x08006eb8
  80053a4:	200016dc 	.word	0x200016dc
  80053a8:	08006ebc 	.word	0x08006ebc
@@ -15394,6 +15394,8 @@ void task_gatekeeper(void *parameters)
  80053c2:	b086      	sub	sp, #24
  80053c4:	af02      	add	r7, sp, #8
  80053c6:	6078      	str	r0, [r7, #4]
+	/*  Declare & Initialize Task Function variables */
+	s_spi_msg_t *p_msg_rcv;
 
     /* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -15444,10 +15446,10 @@ void task_gatekeeper(void *parameters)
  8005436:	f7ff fe79 	bl	800512c <logger_log_print_>
  800543a:	f7ff f9c7 	bl	80047cc <vPortExitCritical>
 
-    s_spi_msg_t *p_msg_rcv;
+
     for (;;)
     {
-        /* Esperar un mensaje de cualquier tarea en la cola de transmisión */
+        /* Wait for a message from any task in the transmission queue */
     	if (xQueueReceive(h_queue_spi_tx, &p_msg_rcv, portMAX_DELAY) == pdPASS)
  800543e:	4b37      	ldr	r3, [pc, #220]	@ (800551c <task_gatekeeper+0x15c>)
  8005440:	681b      	ldr	r3, [r3, #0]
@@ -15573,12 +15575,12 @@ static inline uint32_t cycle_counter_get_time_us(void)
  80054fe:	f7fd fb3b 	bl	8002b78 <xQueueGenericSend>
     	if (xQueueReceive(h_queue_spi_tx, &p_msg_rcv, portMAX_DELAY) == pdPASS)
  8005502:	e79c      	b.n	800543e <task_gatekeeper+0x7e>
- 8005504:	08006f28 	.word	0x08006f28
- 8005508:	08006f88 	.word	0x08006f88
- 800550c:	08006f30 	.word	0x08006f30
+ 8005504:	08006f40 	.word	0x08006f40
+ 8005508:	08006fa0 	.word	0x08006fa0
+ 800550c:	08006f48 	.word	0x08006f48
  8005510:	200016dc 	.word	0x200016dc
- 8005514:	08006f34 	.word	0x08006f34
- 8005518:	08006f38 	.word	0x08006f38
+ 8005514:	08006f4c 	.word	0x08006f4c
+ 8005518:	08006f50 	.word	0x08006f50
  800551c:	20001684 	.word	0x20001684
  8005520:	40010800 	.word	0x40010800
  8005524:	e0001000 	.word	0xe0001000
@@ -16031,7 +16033,7 @@ static inline uint32_t cycle_counter_get_time_us(void)
  800592c:	f7ff fe34 	bl	8005598 <checkerror>
  8005930:	e7d0      	b.n	80058d4 <_get_semihosting_exts+0x50>
  8005932:	bf00      	nop
- 8005934:	08006f8c 	.word	0x08006f8c
+ 8005934:	08006fa4 	.word	0x08006fa4
 
 08005938 <initialise_semihosting_exts>:
  8005938:	b537      	push	{r0, r1, r2, r4, r5, lr}
@@ -16136,7 +16138,7 @@ static inline uint32_t cycle_counter_get_time_us(void)
  8005a24:	b004      	add	sp, #16
  8005a26:	e8bd 87f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, pc}
  8005a2a:	bf00      	nop
- 8005a2c:	08006fa2 	.word	0x08006fa2
+ 8005a2c:	08006fba 	.word	0x08006fba
  8005a30:	200016f8 	.word	0x200016f8
  8005a34:	200016fc 	.word	0x200016fc
  8005a38:	200016f0 	.word	0x200016f0
@@ -16740,10 +16742,10 @@ static inline uint32_t cycle_counter_get_time_us(void)
  8005f6a:	4798      	blx	r3
  8005f6c:	3601      	adds	r6, #1
  8005f6e:	e7f2      	b.n	8005f56 <__libc_init_array+0x1e>
- 8005f70:	08006fe4 	.word	0x08006fe4
- 8005f74:	08006fe4 	.word	0x08006fe4
- 8005f78:	08006fe4 	.word	0x08006fe4
- 8005f7c:	08006fe8 	.word	0x08006fe8
+ 8005f70:	08006ffc 	.word	0x08006ffc
+ 8005f74:	08006ffc 	.word	0x08006ffc
+ 8005f78:	08006ffc 	.word	0x08006ffc
+ 8005f7c:	08007000 	.word	0x08007000
 
 08005f80 <__retarget_lock_init_recursive>:
  8005f80:	4770      	bx	lr
@@ -17267,9 +17269,9 @@ static inline uint32_t cycle_counter_get_time_us(void)
  8006424:	f000 f9ba 	bl	800679c <_printf_i>
  8006428:	e7ee      	b.n	8006408 <_svfiprintf_r+0x1b8>
  800642a:	bf00      	nop
- 800642c:	08006fa6 	.word	0x08006fa6
- 8006430:	08006fac 	.word	0x08006fac
- 8006434:	08006fb0 	.word	0x08006fb0
+ 800642c:	08006fbe 	.word	0x08006fbe
+ 8006430:	08006fc4 	.word	0x08006fc4
+ 8006434:	08006fc8 	.word	0x08006fc8
  8006438:	00000000 	.word	0x00000000
  800643c:	08006191 	.word	0x08006191
 
@@ -17536,9 +17538,9 @@ static inline uint32_t cycle_counter_get_time_us(void)
  800669c:	f000 f87e 	bl	800679c <_printf_i>
  80066a0:	e7e5      	b.n	800666e <_vfiprintf_r+0x1de>
  80066a2:	bf00      	nop
- 80066a4:	08006fa6 	.word	0x08006fa6
- 80066a8:	08006fac 	.word	0x08006fac
- 80066ac:	08006fb0 	.word	0x08006fb0
+ 80066a4:	08006fbe 	.word	0x08006fbe
+ 80066a8:	08006fc4 	.word	0x08006fc4
+ 80066ac:	08006fc8 	.word	0x08006fc8
  80066b0:	00000000 	.word	0x00000000
  80066b4:	0800646b 	.word	0x0800646b
 
@@ -17875,8 +17877,8 @@ static inline uint32_t cycle_counter_get_time_us(void)
  80069d8:	f104 0619 	add.w	r6, r4, #25
  80069dc:	e7f5      	b.n	80069ca <_printf_i+0x22e>
  80069de:	bf00      	nop
- 80069e0:	08006fb7 	.word	0x08006fb7
- 80069e4:	08006fc8 	.word	0x08006fc8
+ 80069e0:	08006fcf 	.word	0x08006fcf
+ 80069e4:	08006fe0 	.word	0x08006fe0
 
 080069e8 <__swbuf_r>:
  80069e8:	b5f8      	push	{r3, r4, r5, r6, r7, lr}

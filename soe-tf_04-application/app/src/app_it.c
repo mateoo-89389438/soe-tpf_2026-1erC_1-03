@@ -68,15 +68,15 @@ void app_it_init(void)
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    /* Verificar que sea el SPI correcto */
+    /* Verify correct SPI*/
     if (hspi->Instance == SPI1)
     {
         BaseType_t x_higher_priority_task_woken = pdFALSE;
 
-        /* Dar el semáforo desde la ISR */
+        /* Send message to the Gatekeeper Queue from ISR */
         xSemaphoreGiveFromISR(h_sem_spi_tx_end, &x_higher_priority_task_woken);
 
-        /* Solicitar un cambio de contexto si la tarea despertada tiene mayor prioridad */
+        /* Context switch if a higher priority task was woken */
         portYIELD_FROM_ISR(x_higher_priority_task_woken);
     }
 }

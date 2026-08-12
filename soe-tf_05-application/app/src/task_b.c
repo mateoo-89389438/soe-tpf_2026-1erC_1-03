@@ -56,7 +56,7 @@
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   250mS";
+const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;

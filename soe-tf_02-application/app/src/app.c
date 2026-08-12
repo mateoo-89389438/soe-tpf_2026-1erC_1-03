@@ -44,8 +44,10 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app_it.h"
+#include "app.h"
 #include "task_a.h"
 #include "task_b.h"
+#include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
 #define G_APP_CNT_INI					0ul
@@ -64,11 +66,10 @@ const char *p_app	= "RTOS - Event-Triggered Systems (ETS)";
 const char *p_app_	= "soe-tf_02-application: Device Driver";
 const char *p_app__	= "(Source => TA149 - Sistemas Operativos Embebidos)";
 
-
 /********************** external data declaration ****************************/
 uint32_t g_app_cnt;
 uint32_t g_app_task_cnt;
-uint32_t g_app_tick_cnt;
+volatile uint32_t g_app_tick_cnt;
 uint32_t g_task_idle_cnt;
 uint32_t g_app_stack_overflow_cnt;
 
@@ -84,6 +85,7 @@ QueueHandle_t h_queue_spi;
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
 TaskHandle_t h_task_b;
+TaskHandle_t h_task_gatekeeper;
 
 /********************** external functions definition ************************/
 void app_init(void)
@@ -106,15 +108,11 @@ void app_init(void)
 	LOGGER_INFO(" %s is a %s", GET_NAME(app), p_app__);
 
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
-     * be explicitly created.
-	 */
-	 h_queue_spi = xQueueCreate(5, sizeof(uint8_t*));
-
+     * be explicitly created.*/
+	h_queue_spi = xQueueCreate(10, sizeof(s_spi_msg_t));
 	 /* Check the queue or semaphore (binary or counting) or mutex was created
-     * successfully.
-     */
-	 configASSERT(h_queue_spi != NULL);
-
+     * successfully.*/
+	configASSERT(h_queue_spi != NULL);
      /* Add queue or semaphore (binary or counting) or mutex to registry. */
 
 	/* Add threads, ... */
@@ -141,6 +139,17 @@ void app_init(void)
 
     /* Check the thread was created successfully. */
     configASSERT(pdPASS == ret);
+
+    /* Task Gatekeeper thread at priority 2 */
+    ret = xTaskCreate(task_gatekeeper,					/* Pointer to the function thats implement the task. */
+					  "Task Gatekeeper",				/* Text name for the task. This is to facilitate debugging only. */
+					  (configMINIMAL_STACK_SIZE * 2),	/* Stack depth in words. */
+					  NULL,								/* We are not using the task parameter. */
+					  (tskIDLE_PRIORITY + 2ul), 		/* This task will run at priority 2. */
+					  &h_task_gatekeeper);				/* We are using a variable as task handle. */
+
+	/* Check the thread was created successfully. */
+	configASSERT(pdPASS == ret);
 
     /* Total amount of heap space that remains unallocated. Is also available
      * with xFreeBytesRemaining variable for heap management schemes 2 to 5.
