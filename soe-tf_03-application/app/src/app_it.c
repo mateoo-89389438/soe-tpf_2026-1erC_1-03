@@ -74,7 +74,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
         BaseType_t x_higher_priority_task_woken = pdFALSE;
 
         /* Unblock the Gatekeeper Task */
-        xSemaphoreGiveFromISR(h_sem_spi_tx, &x_higher_priority_task_woken);
+        xSemaphoreGiveFromISR(h_sem_spi, &x_higher_priority_task_woken);
 
         /* Context switch if needed */
         portYIELD_FROM_ISR(x_higher_priority_task_woken);

@@ -67,7 +67,7 @@ extern QueueHandle_t h_queue_spi;
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
-extern SemaphoreHandle_t h_sem_spi_tx;
+extern SemaphoreHandle_t h_sem_spi_dma;
 
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 extern TaskHandle_t h_task_a;

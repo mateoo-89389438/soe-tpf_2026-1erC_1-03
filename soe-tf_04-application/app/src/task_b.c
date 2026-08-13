@@ -58,8 +58,12 @@
 /********************** internal data definition *****************************/
 const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
 
+static uint8_t p_msg_b_data[] = {0x9F, 0x00, 0x00, 0x00};
+
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
 
 /********************** external functions definition ************************/
 /* Task thread */
@@ -68,11 +72,11 @@ void task_b(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
 
+	s_spi_msg_t *p_msg = NULL;
+
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
-
-	s_spi_msg_t *p_msg_tx;
 
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
@@ -80,17 +84,14 @@ void task_b(void *parameters)
 		/* Update Task Counter */
 		g_task_b_cnt++;
 
-		/* Request an empty memory block from the Pool */
-		if (xQueueReceive(h_queue_spi_pool, &p_msg_tx, portMAX_DELAY) == pdPASS)
+		if (xQueueReceive(h_queue_spi_pool, &p_msg, portMAX_DELAY) == pdPASS)
 		{
-			/* Fill the block with information */
-			p_msg_tx->size = snprintf((char *)p_msg_tx->p_data,
-									  SPI_BUFFER_SIZE,
-									  "Task B Count: %lu\r\n",
-									  g_task_b_cnt);
+			/* Prepare message to Gatekeeper */
+			memcpy(p_msg->p_data, p_msg_b_data, sizeof(p_msg_b_data));
+			p_msg->size = sizeof(p_msg_b_data);
 
-			/* Send the pointer to the Gatekeeper task */
-			xQueueSend(h_queue_spi_tx, &p_msg_tx, 0ul);
+			/* Send to the queue */
+			xQueueSend(h_queue_spi, &p_msg, 0);
 		}
 
     	/* Print out: Wait 250mS */

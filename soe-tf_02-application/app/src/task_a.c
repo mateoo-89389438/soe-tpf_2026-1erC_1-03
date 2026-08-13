@@ -44,9 +44,6 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app.h"
-#include "app_it.h"
-#include "task_gatekeeper.h"
-
 
 /********************** macros and definitions *******************************/
 #define G_TASK_A_CNT_INI	0ul
@@ -61,8 +58,12 @@
 /********************** internal data definition *****************************/
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 
+static uint8_t p_msg_a_data[] = {0x9F, 0x00, 0x00, 0x00};
+
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
 
 /********************** external functions definition ************************/
 /* Task thread */
@@ -70,6 +71,8 @@ void task_a(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_a_cnt = G_TASK_A_CNT_INI;
+
+	s_spi_msg_t *p_msg = NULL;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -81,27 +84,14 @@ void task_a(void *parameters)
 		/* Update Task Counter */
 		g_task_a_cnt++;
 
-		/* Memory Pool */
-		uint8_t *p_data = (uint8_t *) pvPortMalloc(4 * sizeof(uint8_t));
-
-		if (p_data != NULL)
+		if (xQueueReceive(h_queue_spi_pool, &p_msg, portMAX_DELAY) == pdPASS)
 		{
+			/* Prepare message to Gatekeeper */
+			memcpy(p_msg->p_data, p_msg_a_data, sizeof(p_msg_a_data));
+			p_msg->size = sizeof(p_msg_a_data);
 
-			p_data[0] = 0x9F; /* JEDEC ID */
-			p_data[1] = 0x00; /* Dummy byte */
-			p_data[2] = 0x00; /* Dummy byte */
-			p_data[3] = 0x00; /* Dummy byte */
-
-			/* Prepare structure to send */
-			s_spi_msg_t spi_msg;
-			spi_msg.p_data = p_data;
-			spi_msg.size = 4;
-
-			if (xQueueSend(h_queue_spi, (void *)&spi_msg, portMAX_DELAY) != pdPASS)
-			{
-				/* Prevent memory leaks */
-				vPortFree(p_data);
-			}
+			/* Send to the queue */
+			xQueueSend(h_queue_spi, &p_msg, 0);
 		}
 
     	/* Print out: Wait 250mS */

@@ -55,7 +55,7 @@
 /********************** internal data definition *****************************/
 
 /********************** external data declaration ****************************/
-extern SemaphoreHandle_t h_sem_spi_dma_cplt;
+extern SemaphoreHandle_t h_sem_spi_dma;
 
 /********************** external functions definition ************************/
 void app_it_init(void)
@@ -75,7 +75,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
     if (hspi->Instance == SPI1)
     {
     	/* Unblock Gatekeeper Task from ISR */
-        xSemaphoreGiveFromISR(h_sem_spi_dma_cplt, &x_higher_priority_task_woken);
+        xSemaphoreGiveFromISR(h_sem_spi_dma, &x_higher_priority_task_woken);
 
         /* Context switch if needed */
         portYIELD_FROM_ISR(x_higher_priority_task_woken);

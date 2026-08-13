@@ -44,8 +44,7 @@ extern "C" {
 
 /********************** macros ***********************************************/
 #define TASK_QTY 2ul
-#define SPI_POOL_SLOTS      4ul
-#define SPI_BUF_SIZE        32ul
+
 /********************** typedef **********************************************/
 typedef struct {
     uint8_t *p_data;
@@ -58,7 +57,6 @@ extern uint32_t g_app_task_cnt;
 extern volatile uint32_t g_app_tick_cnt;
 extern uint32_t g_task_idle_cnt;
 extern uint32_t g_app_stack_overflow_cnt;
-extern uint8_t g_spi_pool[SPI_POOL_SLOTS][SPI_BUF_SIZE];
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 extern QueueHandle_t h_queue_spi;

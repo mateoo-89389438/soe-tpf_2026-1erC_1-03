@@ -56,11 +56,13 @@
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-static uint8_t g_task_b_tx_buffer[] = {0x01, 0x02, 0x03, 0x04};
 const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
+
+static uint8_t p_msg_a_data[] = {0x9F, 0x00, 0x00, 0x00 };
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
+extern QueueHandle_t h_queue_spi;
 
 /********************** external functions definition ************************/
 /* Task thread */
@@ -69,9 +71,7 @@ void task_b(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
 
-	s_spi_msg_t s_msg_to_send;
-    s_msg_to_send.p_data = g_task_b_tx_buffer;
-    s_msg_to_send.size = sizeof(g_task_b_tx_buffer);
+	s_spi_msg_t msg;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -83,7 +83,12 @@ void task_b(void *parameters)
 		/* Update Task Counter */
 		g_task_b_cnt++;
 
-		xQueueSend(h_queue_spi_tx, &s_msg_to_send, 0);
+		/* Prepare message to Gatekeeper */
+		msg.p_data = p_msg_a_data;
+		msg.size = sizeof(p_msg_a_data);
+
+		/* Send to the queue */
+		xQueueSend(h_queue_spi, &msg, 0);
 
     	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_b_wait_250mS);

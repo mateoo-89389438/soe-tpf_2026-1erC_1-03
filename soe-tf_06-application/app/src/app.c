@@ -57,7 +57,12 @@
 #define G_APP_STACK_OVERFLOW_CNT_INI	0ul
 #define G_TASKS_CNT_INI					0ul
 
+#define SPI_POOL_SIZE 					10ul
+#define SPI_BUFFER_SIZE  				32ul
+
 /********************** internal data declaration ****************************/
+static s_spi_msg_t g_spi_pool_mem[SPI_POOL_SIZE];
+static uint8_t g_spi_pool_buffers[SPI_POOL_SIZE][SPI_BUFFER_SIZE];
 
 /********************** internal functions declaration ***********************/
 
@@ -77,11 +82,13 @@ uint32_t g_tasks_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 QueueHandle_t h_queue_spi;
+QueueHandle_t h_queue_spi_pool;
 
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
 SemaphoreHandle_t h_sem_spi_dma;
+
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
 TaskHandle_t h_task_b;
@@ -110,17 +117,27 @@ void app_init(void)
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
      * be explicitly created.
 	 */
+	h_queue_spi = xQueueCreate(SPI_POOL_SIZE, sizeof(s_spi_msg_t *));
+	h_queue_spi_pool = xQueueCreate(SPI_POOL_SIZE, sizeof(s_spi_msg_t *));
 	h_sem_spi_dma = xSemaphoreCreateBinary();
-	h_queue_spi = xQueueCreate(10, sizeof(s_spi_msg_t));
 	 /* Check the queue or semaphore (binary or counting) or mutex was created
      * successfully.
      */
-	configASSERT(NULL != h_sem_spi_dma);
 	configASSERT(NULL != h_queue_spi);
+	configASSERT(NULL != h_queue_spi_pool);
+	configASSERT(NULL != h_sem_spi_dma);
 	/* Add queue or semaphore (binary or counting) or mutex to registry. */
 
 	/* Add threads, ... */
     BaseType_t ret;
+
+    for (uint32_t i = 0ul; i < SPI_POOL_SIZE; i++)
+	{
+		g_spi_pool_mem[i].p_data = g_spi_pool_buffers[i];
+		g_spi_pool_mem[i].size = 0;
+		s_spi_msg_t *p_init_msg = &g_spi_pool_mem[i];
+		xQueueSend(h_queue_spi_pool, &p_init_msg, 0);
+	}
 
     /* Task A thread at priority 1 */
     ret = xTaskCreate(task_a,							/* Pointer to the function thats implement the task. */

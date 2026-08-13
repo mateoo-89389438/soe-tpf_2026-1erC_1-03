@@ -25,9 +25,6 @@ app/src/app_it.o: ../app/src/app_it.c ../Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
- ../app/inc/logger.h ../app/inc/dwt.h ../app/inc/board.h \
- ../app/inc/app_it.h ../app/inc/app.h ../app/inc/task_a.h \
- ../app/inc/task_b.h ../app/inc/task_gatekeeper.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
@@ -45,6 +42,9 @@ app/src/app_it.o: ../app/src/app_it.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h \
+ ../app/inc/logger.h ../app/inc/dwt.h ../app/inc/board.h \
+ ../app/inc/app_it.h ../app/inc/app.h ../app/inc/task_a.h \
+ ../app/inc/task_b.h ../app/inc/task_gatekeeper.h \
  ../app/inc/task_gatekeeper.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
@@ -73,14 +73,6 @@ app/src/app_it.o: ../app/src/app_it.c ../Core/Inc/main.h \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
-../app/inc/logger.h:
-../app/inc/dwt.h:
-../app/inc/board.h:
-../app/inc/app_it.h:
-../app/inc/app.h:
-../app/inc/task_a.h:
-../app/inc/task_b.h:
-../app/inc/task_gatekeeper.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
 ../Core/Inc/FreeRTOSConfig.h:
@@ -98,4 +90,12 @@ app/src/app_it.o: ../app/src/app_it.c ../Core/Inc/main.h \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h:
+../app/inc/logger.h:
+../app/inc/dwt.h:
+../app/inc/board.h:
+../app/inc/app_it.h:
+../app/inc/app.h:
+../app/inc/task_a.h:
+../app/inc/task_b.h:
+../app/inc/task_gatekeeper.h:
 ../app/inc/task_gatekeeper.h:

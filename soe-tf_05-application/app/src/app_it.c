@@ -72,7 +72,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
     if (hspi->Instance == SPI1)
     {
         /* Release the semaphore to wake up the Gatekeeper */
-        xSemaphoreGiveFromISR(h_sem_spi_tx, &xHigherPriorityTaskWoken);
+        xSemaphoreGiveFromISR(h_sem_spi_dma, &xHigherPriorityTaskWoken);
 
         /* Force a context switch if a higher priority task is woken up */
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);

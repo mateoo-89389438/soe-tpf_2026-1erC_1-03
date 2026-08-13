@@ -44,7 +44,6 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app.h"
-#include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
 #define G_TASK_A_CNT_INI	0ul
@@ -52,8 +51,7 @@
 #define TASK_A_DEL_ZERO		(pdMS_TO_TICKS(0ul))
 #define TASK_A_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
-#define SPI_CMD_READ_ID     (0x9Ful)
-#define SPI_RX_LEN          (3ul)
+#define KNOWN_LENGTH		4ul
 
 /********************** internal data declaration ****************************/
 
@@ -61,21 +59,20 @@
 
 /********************** internal data definition *****************************/
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
-static uint8_t g_spi_rx_buffer[SPI_RX_LEN];
+static uint8_t g_rx_buffer[KNOWN_LENGTH];
 
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
-extern SPI_HandleTypeDef hspi1;
+extern QueueHandle_t h_queue_spi;
 
-uint8_t *g_p_spi_rx_buffer = g_spi_rx_buffer;
-uint32_t g_spi_rx_size = SPI_RX_LEN;
 /********************** external functions definition ************************/
 /* Task thread */
 void task_a(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_a_cnt = G_TASK_A_CNT_INI;
-    uint8_t spi_cmd = SPI_CMD_READ_ID;
+
+	s_spi_msg_t msg;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -87,23 +84,16 @@ void task_a(void *parameters)
 		/* Update Task Counter */
 		g_task_a_cnt++;
 
-        /* Assert CS (Low) to select the Flash Memory */
-        HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_RESET);
+		msg.p_data = g_rx_buffer;
+		msg.size = sizeof(g_rx_buffer);
 
-        /* Reset cycle counter to measure transaction execution time */
-		cycle_counter_reset();
+		/* Send request to Gatekeeper */
+		xQueueSend(h_queue_spi, &msg, 0ul);
 
-        /* Transmit Command via Polling (Blocking for 1 byte is acceptable) */
-        HAL_SPI_Transmit(&hspi1, &spi_cmd, 1ul, HAL_MAX_DELAY);
-
-    	/* Print out: Transaction Started */
+    	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_a_wait_250mS);
-
-        /* Start Reception via Interrupt (Non-blocking) */
-        HAL_SPI_Receive_IT(&hspi1, g_spi_rx_buffer, SPI_RX_LEN);
-
-        /* Wait before next transaction */
 		vTaskDelay(TASK_A_DEL_MAX);
 	}
 }
+
 /********************** end of file ******************************************/

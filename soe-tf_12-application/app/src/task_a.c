@@ -44,8 +44,6 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app.h"
-#include "app_it.h"
-#include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
 #define G_TASK_A_CNT_INI	0ul
@@ -53,13 +51,15 @@
 #define TASK_A_DEL_ZERO		(pdMS_TO_TICKS(0ul))
 #define TASK_A_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
+#define KNOWN_LENGTH		4ul
+
 /********************** internal data declaration ****************************/
-static uint8_t g_rx_buffer[10];
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
+static uint8_t g_rx_buffer[KNOWN_LENGTH];
 
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
@@ -72,6 +72,8 @@ void task_a(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_a_cnt = G_TASK_A_CNT_INI;
 
+	s_spi_msg_t msg;
+
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
@@ -82,14 +84,13 @@ void task_a(void *parameters)
 		/* Update Task Counter */
 		g_task_a_cnt++;
 
-		s_spi_msg_t spi_request;
-		spi_request.p_data = g_rx_buffer;
-		spi_request.size = sizeof(g_rx_buffer);
+		msg.p_data = g_rx_buffer;
+		msg.size = sizeof(g_rx_buffer);
 
-		/* Send messege to Gatekeeper */
-		xQueueSend(h_queue_spi, &spi_request, portMAX_DELAY);
+		/* Send request to Gatekeeper */
+		xQueueSend(h_queue_spi, &msg, 0ul);
 
-		/* Print out: Wait 250mS */
+    	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_a_wait_250mS);
 		vTaskDelay(TASK_A_DEL_MAX);
 	}

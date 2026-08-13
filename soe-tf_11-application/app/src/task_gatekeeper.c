@@ -16,74 +16,109 @@
 #include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
-#define G_TASK_GATEKEEPER_CNT_INI   0ul
+#define G_TASK_GATEKEEPER_CNT_INI	0ul
+#define SPI_TIMEOUT_MS  (pdMS_TO_TICKS(1000ul))
+
+#define SPI_BUFFER_SIZE        			32ul
 
 /********************** internal data declaration ****************************/
-const char *p_task_gatekeeper_rx_ok   = "   ==> Task Gatekeeper - SPI Rx Complete";
-const char *p_task_gatekeeper_rx_err  = "   ==> Task Gatekeeper - SPI Rx Error";
+
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-uint32_t g_task_gatekeeper_cnt;
+const char *p_task_gatekeeper_rx_ok   = "   ==> Task Gatekeeper - SPI Rx Complete";
+const char *p_task_gatekeeper_rx_err  = "   ==> Task Gatekeeper - SPI Rx Error";
+
 static uint32_t g_t_tx_us = 0ul;
 static uint32_t g_wcet_tx_us = 0ul;
+
 /********************** external data declaration ****************************/
+uint32_t g_task_gatekeeper_cnt;
 extern SPI_HandleTypeDef hspi1;
-extern QueueHandle_t h_queue_spi_rx;
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
+extern SemaphoreHandle_t h_sem_spi;
 
 /********************** external functions definition ************************/
 void task_gatekeeper(void *parameters)
 {
-    s_spi_msg_t msg;
+	/*  Declare & Initialize Task Function variables */
+	g_task_gatekeeper_cnt = G_TASK_GATEKEEPER_CNT_INI;
 
-    /* Initialize Task Function variables */
-    g_task_gatekeeper_cnt = G_TASK_GATEKEEPER_CNT_INI;
+	s_spi_msg_t *p_msg = NULL;
+	HAL_StatusTypeDef hal_status;
+	uint8_t cmd = 0x9F;
 
-    /* Print out: Task Initialized */
+	/* Print out: Task Initialized */
     LOGGER_INFO(" ");
     LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
-    /* Ensure Chip Select (PA4) starts High (Inactive) */
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-
     for (;;)
     {
-        /* Block until a request arrives in the queue */
-        if (pdTRUE == xQueueReceive(h_queue_gatekeeper, &msg, portMAX_DELAY))
-        {
-            g_task_gatekeeper_cnt++;
+    	/* Update Task Counter */
+		g_task_gatekeeper_cnt++;
 
-            /* Assert CS (PA4 Low) */
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+        /* Block until a new SPI message arrives */
+    	if (pdPASS == xQueueReceive(h_queue_spi, &p_msg, portMAX_DELAY))
+		{
+    		/* Assert Chip Select (PA4 -> Low) */
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 
-            /* Reset DWT cycle counter before SPI operation */
+			/* Reset the clock cycle counter just before starting TX */
 			cycle_counter_reset();
 
-            /* Start Non-Blocking SPI Reception via Interrupt */
-            if (HAL_OK == HAL_SPI_Receive_IT(&hspi1, msg.p_data, msg.size))
-            {
-                /* Wait for ISR to signal completion */
-                if (pdTRUE == xSemaphoreTake(h_sem_spi_cplt, portMAX_DELAY))
-                {
-                    LOGGER_INFO(p_task_gatekeeper_rx_ok);
-                }
-            }
-            else
-            {
-                LOGGER_INFO(p_task_gatekeeper_rx_err);
-            }
+			hal_status = HAL_SPI_Transmit(&hspi1, &cmd, 1, SPI_TIMEOUT_MS);
 
-            /* Calculate elapsed time in microseconds */
+			if (HAL_OK == hal_status)
+			{
+				uint32_t rx_index = 0ul;
+                uint8_t rx_byte = 0;
+
+				/* Unknown Length Reception: Byte by byte via interrupt */
+				while (rx_byte != '\n' && rx_byte != '\r' && rx_byte != '\0' && rx_index < SPI_BUFFER_SIZE)
+				{
+					/* Receive 1 byte by interrupt at the current buffer position */
+                    hal_status = HAL_SPI_Receive_IT(&hspi1, &p_msg->p_data[rx_index], 1);
+                    
+                    if (HAL_OK != hal_status)
+                    {
+                        break;
+                    }
+                    
+					/* Wait for the ISR to receive the byte and release the semaphore */
+                    xSemaphoreTake(h_sem_spi, portMAX_DELAY);
+                    rx_byte = p_msg->p_data[rx_index];
+                    rx_index++;
+				}
+				p_msg->size = rx_index;
+			}
+
+			/* Calculate elapsed time in microseconds (us) */
 			g_t_tx_us = cycle_counter_get_time_us();
 
-            /* De-assert CS (PA4 High) */
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+			/* Deassert Chip Select (PA4 -> High) */
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
-            /* Update Worst-Case Execution Time (WCET) */
 			if (g_t_tx_us > g_wcet_tx_us)
 			{
 				g_wcet_tx_us = g_t_tx_us;
 			}
+
+			xQueueSend(h_queue_spi_pool, &p_msg, 0ul);
+
+			if (HAL_OK == hal_status)
+			{
+				LOGGER_INFO(p_task_gatekeeper_rx_ok);
+			}
+			else
+			{
+				LOGGER_INFO(p_task_gatekeeper_rx_err);
+			}
+
+
         }
     }
 }
+
+/********************** end of file ******************************************/
+

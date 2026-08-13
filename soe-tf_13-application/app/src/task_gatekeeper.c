@@ -16,70 +16,85 @@
 #include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
-#define G_TASK_GATEKEEPER_CNT_INI   0ul
+#define G_TASK_GATEKEEPER_CNT_INI	0ul
+#define SPI_TIMEOUT_MS  (pdMS_TO_TICKS(1000ul))
 
 /********************** internal data declaration ****************************/
-const char *p_task_gatekeeper_rx_ok   = "   ==> Task Gatekeeper - SPI Rx Complete";
-const char *p_task_gatekeeper_rx_err  = "   ==> Task Gatekeeper - SPI Rx Error";
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-uint32_t g_task_gatekeeper_cnt;
+const char *p_task_gatekeeper_rx_ok   = "   ==> Task Gatekeeper - SPI Rx Complete";
+const char *p_task_gatekeeper_rx_err  = "   ==> Task Gatekeeper - SPI Rx Error";
+
 static uint32_t g_t_tx_us = 0ul;
 static uint32_t g_wcet_tx_us = 0ul;
 
 /********************** external data declaration ****************************/
+uint32_t g_task_gatekeeper_cnt;
 extern SPI_HandleTypeDef hspi1;
-extern QueueHandle_t h_queue_spi_rx;
-extern SemaphoreHandle_t h_sem_spi_rx_cplt;
-
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
+extern SemaphoreHandle_t h_sem_spi;
 
 /********************** external functions definition ************************/
 void task_gatekeeper(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
-    s_spi_msg_t current_msg;
+	g_task_gatekeeper_cnt = G_TASK_GATEKEEPER_CNT_INI;
 
-    /* Print out: Task Initialized */
+	s_spi_msg_t *p_msg = NULL;
+	HAL_StatusTypeDef hal_status;
+
+	/* Print out: Task Initialized */
     LOGGER_INFO(" ");
-    LOGGER_INFO("  %s is running", pcTaskGetName(NULL));
+    LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
     for (;;)
     {
-    	/* Wait for a read message in the queue (blocking) */
-		if (xQueueReceive(h_queue_spi_rx, &current_msg, portMAX_DELAY) == pdPASS)
-		{
+    	/* Update Task Counter */
+		g_task_gatekeeper_cnt++;
 
-			/* Set Chip Select LOW (Manual GPIO) */
+        /* Block until a new SPI message arrives */
+    	if (pdPASS == xQueueReceive(h_queue_spi, &p_msg, portMAX_DELAY))
+		{
+    		/* Assert Chip Select (PA4 -> Low) */
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 
-			/* Reset cycle counter */
+			/* Reset the clock cycle counter just before starting TX */
 			cycle_counter_reset();
 
-			/* Start DMA reception */
-			HAL_SPI_Receive_DMA(&hspi1, current_msg.p_data, current_msg.size);
+			hal_status = HAL_SPI_Receive_DMA(&hspi1, p_msg->p_data, p_msg->size);
 
-			/* Wait for DMA to finish (ISR -> Task synchronization) */
-			xSemaphoreTake(h_sem_spi_rx_cplt, portMAX_DELAY);
+			if (HAL_OK == hal_status)
+			{
+				xSemaphoreTake(h_sem_spi, portMAX_DELAY);
+			}
 
-			/* Compute elapsed time in microseconds */
+			/* Calculate elapsed time in microseconds (us) */
 			g_t_tx_us = cycle_counter_get_time_us();
 
-			/* Set Chip Select HIGH */
+			/* Deassert Chip Select (PA4 -> High) */
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
-			/* Update Worst-Case Execution Time (WCET) */
 			if (g_t_tx_us > g_wcet_tx_us)
 			{
 				g_wcet_tx_us = g_t_tx_us;
 			}
 
-			LOGGER_INFO(p_task_gatekeeper_rx_ok);
-		}
-		else
-		{
-			LOGGER_INFO(p_task_gatekeeper_rx_err);
-		}
+			xQueueSend(h_queue_spi_pool, &p_msg, 0ul);
+
+			if (HAL_OK == hal_status)
+			{
+				LOGGER_INFO(p_task_gatekeeper_rx_ok);
+			}
+			else
+			{
+				LOGGER_INFO(p_task_gatekeeper_rx_err);
+			}
+        }
     }
 }
+
+/********************** end of file ******************************************/
+

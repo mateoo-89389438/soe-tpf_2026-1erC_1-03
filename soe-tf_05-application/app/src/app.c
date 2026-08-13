@@ -81,7 +81,7 @@ QueueHandle_t h_queue_spi;
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
-SemaphoreHandle_t h_sem_spi_tx;
+SemaphoreHandle_t h_sem_spi_dma;
 
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
@@ -109,17 +109,14 @@ void app_init(void)
 	LOGGER_INFO(" %s is a %s", GET_NAME(app), p_app__);
 
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
-     * be explicitly created.
-	 *
-	 * Check the queue or semaphore (binary or counting) or mutex was created
-     * successfully.
-     *
-     * Add queue or semaphore (binary or counting) or mutex to registry. */
+     * be explicitly created.*/
 	h_queue_spi = xQueueCreate(5, sizeof(s_spi_msg_t));
+	h_sem_spi_dma = xSemaphoreCreateBinary();
+	 /* Check the queue or semaphore (binary or counting) or mutex was created
+     * successfully.*/
 	configASSERT(NULL != h_queue_spi);
-
-	h_sem_spi_tx = xSemaphoreCreateBinary();
-	configASSERT(NULL != h_sem_spi_tx);
+	configASSERT(NULL != h_sem_spi_dma);
+     /* Add queue or semaphore (binary or counting) or mutex to registry. */
 
 	/* Add threads, ... */
     BaseType_t ret;

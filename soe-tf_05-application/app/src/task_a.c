@@ -58,8 +58,11 @@
 /********************** internal data definition *****************************/
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 
+static uint8_t p_msg_a_data[] = {0x9F, 0x00, 0x00, 0x00};
+
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
+extern QueueHandle_t h_queue_spi;
 
 /********************** external functions definition ************************/
 /* Task thread */
@@ -68,10 +71,7 @@ void task_a(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_a_cnt = G_TASK_A_CNT_INI;
 
-	static uint8_t s_payload_a[] = {0x9F};
-	static s_spi_msg_t s_msg_a;
-	s_msg_a.p_data = s_payload_a;
-	s_msg_a.size = sizeof(s_payload_a);
+	s_spi_msg_t msg;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -83,7 +83,12 @@ void task_a(void *parameters)
 		/* Update Task Counter */
 		g_task_a_cnt++;
 
-		xQueueSend(h_queue_spi, &s_msg_a, portMAX_DELAY);
+		/* Prepare message to Gatekeeper */
+		msg.p_data = p_msg_a_data;
+		msg.size = sizeof(p_msg_a_data);
+
+		/* Send to the queue */
+		xQueueSend(h_queue_spi, &msg, portMAX_DELAY);
 
     	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_a_wait_250mS);

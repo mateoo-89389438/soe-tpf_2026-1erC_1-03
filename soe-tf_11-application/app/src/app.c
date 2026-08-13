@@ -43,8 +43,8 @@
 
 /* Application & Tasks includes */
 #include "board.h"
-#include "app_it.h"
 #include "app.h"
+#include "app_it.h"
 #include "task_a.h"
 #include "task_b.h"
 #include "task_gatekeeper.h"
@@ -57,8 +57,12 @@
 #define G_APP_STACK_OVERFLOW_CNT_INI	0ul
 #define G_TASKS_CNT_INI					0ul
 
-#define GATEKEEPER_QUEUE_LENGTH    		5ul
+#define SPI_POOL_SIZE      				10ul
+#define SPI_BUFFER_SIZE        			32ul
+
 /********************** internal data declaration ****************************/
+static s_spi_msg_t g_spi_pool_mem[SPI_POOL_SIZE];
+static uint8_t g_spi_pool_buffers[SPI_POOL_SIZE][SPI_BUFFER_SIZE];
 
 /********************** internal functions declaration ***********************/
 
@@ -77,12 +81,13 @@ uint32_t g_app_stack_overflow_cnt;
 uint32_t g_tasks_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
-QueueHandle_t h_queue_gatekeeper;
+QueueHandle_t h_queue_spi;
+QueueHandle_t h_queue_spi_pool;
 
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
-SemaphoreHandle_t h_sem_spi_cplt;
+SemaphoreHandle_t h_sem_spi;
 
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
@@ -112,16 +117,25 @@ void app_init(void)
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
      * be explicitly created.
 	 */
-	h_queue_gatekeeper = xQueueCreate(GATEKEEPER_QUEUE_LENGTH, sizeof(s_spi_msg_t));
-
-	/* 2. Create Binary Semaphore for SPI ISR Synchronization */
-	h_sem_spi_cplt = xSemaphoreCreateBinary();
+	h_queue_spi = xQueueCreate(SPI_POOL_SIZE, sizeof(s_spi_msg_t *));
+	h_queue_spi_pool = xQueueCreate(SPI_POOL_SIZE, sizeof(s_spi_msg_t *));
+	h_sem_spi = xSemaphoreCreateBinary();
 	 /* Check the queue or semaphore (binary or counting) or mutex was created
      * successfully.
      */
-	configASSERT(NULL != h_queue_gatekeeper);
-	configASSERT(NULL != h_sem_spi_cplt);
+	configASSERT(NULL != h_queue_spi);
+	configASSERT(NULL != h_queue_spi_pool);
+	configASSERT(NULL != h_sem_spi);
      /* Add queue or semaphore (binary or counting) or mutex to registry. */
+
+	/* Initialize Memory Pool */
+	for (uint32_t i = 0ul; i < SPI_POOL_SIZE; i++)
+	{
+		g_spi_pool_mem[i].p_data = g_spi_pool_buffers[i];
+		g_spi_pool_mem[i].size = 0ul;
+		s_spi_msg_t *p_msg = &g_spi_pool_mem[i];
+		xQueueSend(h_queue_spi_pool, &p_msg, 0ul);
+	}
 
 	/* Add threads, ... */
     BaseType_t ret;

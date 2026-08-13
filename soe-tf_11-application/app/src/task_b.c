@@ -60,6 +60,8 @@ const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
 
 /********************** external functions definition ************************/
 /* Task thread */
@@ -67,6 +69,8 @@ void task_b(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
+
+	s_spi_msg_t *p_msg = NULL;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -78,7 +82,16 @@ void task_b(void *parameters)
 		/* Update Task Counter */
 		g_task_b_cnt++;
 
-    	/* Print out: Wait 250mS */
+		if (xQueueReceive(h_queue_spi_pool, &p_msg, portMAX_DELAY) == pdPASS)
+		{
+			/* initializes the size to 0 and delegates the request. */
+			p_msg->size = 0ul;; // Unknown Length
+
+			/* Send to the queue */
+			xQueueSend(h_queue_spi, &p_msg, 0ul);
+		}
+
+    	/* Print out: Wait */
 		LOGGER_INFO(p_task_b_wait_250mS);
 		vTaskDelay(TASK_B_DEL_MAX);
 	}

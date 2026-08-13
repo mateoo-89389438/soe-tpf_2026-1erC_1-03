@@ -35,6 +35,7 @@
 /********************** inclusions *******************************************/
 /* Project includes */
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Demo includes */
 #include "logger.h"
@@ -55,7 +56,7 @@
 /********************** internal data definition *****************************/
 
 /********************** external data declaration ****************************/
-extern SemaphoreHandle_t h_sem_spi_rx_cplt;
+extern SemaphoreHandle_t h_sem_spi;
 
 /********************** external functions definition ************************/
 void app_it_init(void)
@@ -70,16 +71,15 @@ void app_it_init(void)
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    BaseType_t x_higher_priority_task_woken = pdFALSE;
-
     if (hspi->Instance == SPI1)
     {
-    	/* Unblock Gatekeeper Task from ISR */
-        xSemaphoreGiveFromISR(h_sem_spi_rx_cplt, &x_higher_priority_task_woken);
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-        /* Context switch if needed */
-        portYIELD_FROM_ISR(x_higher_priority_task_woken);
+        /* Release the semaphore from the ISR to unblock the Gatekeeper */
+        xSemaphoreGiveFromISR(h_sem_spi, &xHigherPriorityTaskWoken);
+
+        /* Force a context switch if the Gatekeeper has higher priority */
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 }
-
 /********************** end of file ******************************************/

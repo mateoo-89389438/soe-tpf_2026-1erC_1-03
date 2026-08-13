@@ -42,8 +42,7 @@ app/src/task_a.o: ../app/src/task_a.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h \
- ../app/inc/logger.h ../app/inc/dwt.h ../app/inc/board.h ../app/inc/app.h \
- ../app/inc/task_gatekeeper.h
+ ../app/inc/logger.h ../app/inc/dwt.h ../app/inc/board.h ../app/inc/app.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:
@@ -92,4 +91,3 @@ app/src/task_a.o: ../app/src/task_a.c ../Core/Inc/main.h \
 ../app/inc/dwt.h:
 ../app/inc/board.h:
 ../app/inc/app.h:
-../app/inc/task_gatekeeper.h:

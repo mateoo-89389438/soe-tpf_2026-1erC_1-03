@@ -44,8 +44,6 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app.h"
-#include "app_it.h"
-#include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
 #define G_TASK_A_CNT_INI	0ul
@@ -54,7 +52,6 @@
 #define TASK_A_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
 /********************** internal data declaration ****************************/
-static uint8_t g_task_a_spi_buf[32ul];
 
 /********************** internal functions declaration ***********************/
 
@@ -63,15 +60,17 @@ const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
 
 /********************** external functions definition ************************/
 /* Task thread */
 void task_a(void *parameters)
 {
-    s_spi_msg_t msg;
+	/*  Declare & Initialize Task Function variables */
+	g_task_a_cnt = G_TASK_A_CNT_INI;
 
-    /*  Declare & Initialize Task Function variables */
-    g_task_a_cnt = G_TASK_A_CNT_INI;
+	s_spi_msg_t *p_msg = NULL;
 
     /* Print out: Task Initialized */
     LOGGER_INFO(" ");
@@ -80,15 +79,17 @@ void task_a(void *parameters)
     /* As per most tasks, this task is implemented in an infinite loop. */
     for (;;)
     {
-    	/* Update Task Counter */
+        /* Update Task Counter */
         g_task_a_cnt++;
 
-        /* Prepare message for Gatekeeper */
-        msg.p_data = g_task_a_spi_buf;
-        msg.size   = (uint16_t)sizeof(g_task_a_spi_buf); //This generates the big WCET time
+        if (xQueueReceive(h_queue_spi_pool, &p_msg, portMAX_DELAY) == pdPASS)
+		{
+        	/* initializes the size to 0 and delegates the request. */
+        	p_msg->size = 0ul;; // Unknown Length
 
-        /* Send request to Gatekeeper Task */
-        xQueueSend(h_queue_gatekeeper, &msg, portMAX_DELAY);
+			/* Send to the queue */
+			xQueueSend(h_queue_spi, &p_msg, 0ul);
+		}
 
         /* Print out: Wait 250mS */
         LOGGER_INFO(p_task_a_wait_250mS);

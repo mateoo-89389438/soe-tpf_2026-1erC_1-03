@@ -16,26 +16,34 @@
 #include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
+#define G_TASK_GATEKEEPER_CNT_INI    0ul
 #define SPI_TIMEOUT_MS  (pdMS_TO_TICKS(1000ul))
 
 /********************** internal data declaration ****************************/
-const char *p_task_gatekeeper_rx_ok   = "   ==> Task Gatekeeper - SPI Rx Complete";
-const char *p_task_gatekeeper_rx_err  = "   ==> Task Gatekeeper - SPI Rx Error";
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+const char *p_task_gatekeeper_rx_ok   = "   ==> Task Gatekeeper - SPI Rx Complete";
+const char *p_task_gatekeeper_rx_err  = "   ==> Task Gatekeeper - SPI Rx Error";
+
 static uint32_t g_t_tx_us = 0ul;
 static uint32_t g_wcet_tx_us = 0ul;
 
 /********************** external data declaration ****************************/
+uint32_t g_task_gatekeeper_cnt;
 extern SPI_HandleTypeDef hspi1;
-extern QueueHandle_t h_queue_spi_rx;
+extern QueueHandle_t h_queue_spi;
+extern SemaphoreHandle_t h_sem_spi;
 
 /********************** external functions definition ************************/
 void task_gatekeeper(void *parameters)
 {
+	/* Declare & Initialize Task Function variables */
+	g_task_gatekeeper_cnt = G_TASK_GATEKEEPER_CNT_INI;
+
     s_spi_msg_t rx_msg;
+    HAL_StatusTypeDef hal_status;
 
     /* Print out: Task Initialized */
     LOGGER_INFO(" ");
@@ -43,23 +51,45 @@ void task_gatekeeper(void *parameters)
 
     for (;;)
     {
+    	/* Update Task Counter */
+		g_task_gatekeeper_cnt++;
+
         /* Block task indefinitely until a message is received from the ISR */
-        if (pdTRUE == xQueueReceive(h_queue_spi_rx, &rx_msg, portMAX_DELAY))
+        if (pdPASS == xQueueReceive(h_queue_spi, &rx_msg, portMAX_DELAY))
         {
+        	/* Assert Chip Select (PA4 -> Low) */
+        	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+
+        	/* Reset the clock cycle counter just before starting TX */
+			cycle_counter_reset();
+
+			hal_status = HAL_SPI_Receive_IT(&hspi1, rx_msg.p_data, rx_msg.size);
+
+			if (HAL_OK == hal_status)
+			{
+				/* Wait for the ISR to receive the byte and release the semaphore */
+				xSemaphoreTake(h_sem_spi, portMAX_DELAY);
+			}
+
         	/* Calculate elapsed time in microseconds (us) AFTER CS is released */
         	g_t_tx_us = cycle_counter_get_time_us();
 
             /* De-assert CS (High) to release the Flash Memory bus */
-            HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
-            /* Update the WCET if the current reception time is greater */
 			if (g_t_tx_us > g_wcet_tx_us)
 			{
 				g_wcet_tx_us = g_t_tx_us;
 			}
 
-            /* Print out: Reception successful and the actual JEDEC ID data */
-            LOGGER_INFO(p_task_gatekeeper_rx_ok);
+			if (HAL_OK == hal_status)
+			{
+				LOGGER_INFO(p_task_gatekeeper_rx_ok);
+			}
+			else
+			{
+				LOGGER_INFO(p_task_gatekeeper_rx_err);
+			}
         }
     }
 }

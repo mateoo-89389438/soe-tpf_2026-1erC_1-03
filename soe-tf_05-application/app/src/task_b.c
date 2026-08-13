@@ -58,6 +58,8 @@
 /********************** internal data definition *****************************/
 const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
 
+static uint8_t p_msg_b_data[] = {0x9F, 0x00, 0x00, 0x00};
+
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
 
@@ -68,10 +70,7 @@ void task_b(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
 
-	static uint8_t s_payload_b[] = {0x9F}; /* Comando JEDEC ID de W25Q32, por ejemplo */
-	static s_spi_msg_t s_msg_b;
-	s_msg_b.p_data = s_payload_b;
-	s_msg_b.size = sizeof(s_payload_b);
+	s_spi_msg_t msg;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -83,7 +82,11 @@ void task_b(void *parameters)
 		/* Update Task Counter */
 		g_task_b_cnt++;
 
-		xQueueSend(h_queue_spi, &s_msg_b, portMAX_DELAY);
+		/* Prepare message to Gatekeeper */
+		msg.p_data = p_msg_b_data;
+		msg.size = sizeof(p_msg_b_data);
+
+		xQueueSend(h_queue_spi, &msg, portMAX_DELAY);
 
     	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_b_wait_250mS);

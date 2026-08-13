@@ -48,22 +48,15 @@
 #include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
-#define G_RX_POOL_SIZE      3ul
-#define G_RX_KNOWN_LENGTH   8ul
 
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-uint8_t g_rx_pool[G_RX_POOL_SIZE][G_RX_KNOWN_LENGTH];
-uint32_t g_pool_index = 0ul;
-
-static uint32_t g_t_tx_us = 0ul;
-static uint32_t g_wcet_tx_us = 0ul;
 
 /********************** external data declaration ****************************/
-extern QueueHandle_t h_queue_spi_rx;
+extern SemaphoreHandle_t h_sem_spi;
 
 /********************** external functions definition ************************/
 void app_it_init(void)
@@ -76,38 +69,17 @@ void app_it_init(void)
 	__asm("CPSIE i");	/* enable interrupts */
 }
 
-/* SPI HAL Rx Complete Callback */
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     if (hspi->Instance == SPI1)
     {
-        BaseType_t x_higher_priority_task_woken = pdFALSE;
-        s_spi_msg_t msg;
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-        /* Measure current execution time in microseconds since reset */
-		g_t_tx_us = cycle_counter_get_time_us();
+        /* Release the semaphore from the ISR to unblock the Gatekeeper */
+        xSemaphoreGiveFromISR(h_sem_spi, &xHigherPriorityTaskWoken);
 
-        /* Deassert Chip Select (PA4 -> HIGH) */
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-
-        /* Update Worst-Case Execution Time (WCET) */
-		if (g_t_tx_us > g_wcet_tx_us)
-		{
-			g_wcet_tx_us = g_t_tx_us;
-		}
-
-        /* Prepare message pointing to current memory pool buffer */
-        msg.p_data = g_rx_pool[g_pool_index];
-        msg.size = G_RX_KNOWN_LENGTH;
-
-        /* Update pool index safely for next reception */
-        g_pool_index = (g_pool_index + 1ul) % G_RX_POOL_SIZE;
-
-        /* Send message to Gatekeeper Task */
-        xQueueSendFromISR(h_queue_spi_rx, &msg, &x_higher_priority_task_woken);
-
-        /* Context switch if higher priority task was woken */
-        portYIELD_FROM_ISR(x_higher_priority_task_woken);
+        /* Force a context switch if the Gatekeeper has higher priority */
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 }
 /********************** end of file ******************************************/

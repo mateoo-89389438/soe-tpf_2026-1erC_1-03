@@ -19,25 +19,29 @@
 #define G_TASK_GATEKEEPER_CNT_INI   0ul
 
 /********************** internal data declaration ****************************/
-const char *p_task_gatekeeper_rx_ok   = "   ==> Task Gatekeeper - SPI Tx Complete";
-const char *p_task_gatekeeper_rx_err  = "   ==> Task Gatekeeper - SPI Tx Error";
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-uint32_t g_task_gatekeeper_cnt;
+const char *p_task_gatekeeper_tx_ok   	= "   ==> Task Gatekeeper - SPI Tx Complete";
+const char *p_task_gatekeeper_tx_error	= "   ==> Task Gatekeeper - SPI Tx Error";
+
 static uint32_t g_t_tx_us = 0ul;
 static uint32_t g_wcet_tx_us = 0ul;
 
 /********************** external data declaration ****************************/
+uint32_t g_task_gatekeeper_cnt;
 extern SPI_HandleTypeDef hspi1;
 extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
 
 /********************** external functions definition ************************/
 void task_gatekeeper(void *parameters)
 {
 	/* Declare & Initialize Task Function variables */
-	s_spi_msg_t rx_msg;
+	g_task_gatekeeper_cnt = G_TASK_GATEKEEPER_CNT_INI;
+
+	s_spi_msg_t *p_msg = NULL;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -45,8 +49,11 @@ void task_gatekeeper(void *parameters)
 
 	for (;;)
 	{
+		/* Update Task Counter */
+		g_task_gatekeeper_cnt++;
+
 		/* Wait indefinitely for a message in the queue */
-		if (xQueueReceive(h_queue_spi, &rx_msg, portMAX_DELAY) == pdTRUE)
+		if (xQueueReceive(h_queue_spi, &p_msg, portMAX_DELAY) == pdTRUE)
 		{
 			/* Chip Select (CS) to LOW in PA4 */
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
@@ -55,7 +62,7 @@ void task_gatekeeper(void *parameters)
 			cycle_counter_reset();
 
 			/* Transmit via SPI using Polling */
-			HAL_SPI_Transmit(&hspi1, rx_msg.p_data, rx_msg.size, HAL_MAX_DELAY);
+			HAL_SPI_Transmit(&hspi1, p_msg->p_data, p_msg->size, HAL_MAX_DELAY);
 
 			/* Get Transmission Time in us */
 			g_t_tx_us = cycle_counter_get_time_us();
@@ -69,11 +76,14 @@ void task_gatekeeper(void *parameters)
 				g_wcet_tx_us = g_t_tx_us;
 			}
 
-			/* Print out: SPI Tx Complete */
-			LOGGER_INFO(p_task_gatekeeper_rx_ok);
+			LOGGER_INFO(p_task_gatekeeper_tx_ok);
 
-			/* Free Memory Pool allocation */
-			vPortFree(rx_msg.p_data);
+			xQueueSend(h_queue_spi_pool, &p_msg, 0);
+		}
+		else
+		{
+			LOGGER_INFO(p_task_gatekeeper_tx_error);
 		}
 	}
 }
+/********************** end of file ******************************************/

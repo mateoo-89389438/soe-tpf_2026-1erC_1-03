@@ -76,12 +76,12 @@ uint32_t g_app_stack_overflow_cnt;
 uint32_t g_tasks_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
-QueueHandle_t h_queue_spi_tx;
+QueueHandle_t h_queue_spi;
 
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
-SemaphoreHandle_t h_sem_spi_tx;
+SemaphoreHandle_t h_sem_spi;
 
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
@@ -110,12 +110,12 @@ void app_init(void)
 
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
      * be explicitly created.*/
-	h_queue_spi_tx = xQueueCreate(5, sizeof(s_spi_msg_t));
-	h_sem_spi_tx = xSemaphoreCreateBinary();
+	h_queue_spi = xQueueCreate(10, sizeof(s_spi_msg_t));
+	h_sem_spi = xSemaphoreCreateBinary();
 	 /* Check the queue or semaphore (binary or counting) or mutex was created
      * successfully.*/
-	configASSERT(h_queue_spi_tx != NULL);
-	configASSERT(h_sem_spi_tx != NULL);
+	configASSERT(h_queue_spi != NULL);
+	configASSERT(h_sem_spi != NULL);
      /*Add queue or semaphore (binary or counting) or mutex to registry. */
 
 	/* Add threads, ... */

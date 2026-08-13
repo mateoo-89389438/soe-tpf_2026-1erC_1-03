@@ -51,17 +51,19 @@
 #define TASK_B_DEL_ZERO		(pdMS_TO_TICKS(0ul))
 #define TASK_B_DEL_MAX		(pdMS_TO_TICKS(2500ul))
 
+#define KNOWN_LENGTH		4ul
+
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
 const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
-static uint8_t g_rx_buffer[10];
+static uint8_t g_rx_buffer[KNOWN_LENGTH];
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
-extern QueueHandle_t h_queue_spi_rx;
+extern QueueHandle_t h_queue_spi;
 
 /********************** external functions definition ************************/
 /* Task thread */
@@ -70,26 +72,26 @@ void task_b(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
 
-	/* Print out: Task Initialized
+	s_spi_msg_t msg;
+
+	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
-	*/
-
-	s_spi_msg_t g_msg_b;
-	g_msg_b.p_data = g_rx_buffer;
-	g_msg_b.size = sizeof(g_rx_buffer);
 
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
     {
-		/* Send request to Gatekeeper (don't block if full for this example) */
-		xQueueSend(h_queue_spi_rx, &g_msg_b, 0);
-
 		/* Update Task Counter */
 		g_task_b_cnt++;
 
+		msg.p_data = g_rx_buffer;
+		msg.size = sizeof(g_rx_buffer);
+
+		/* Send request to Gatekeeper */
+		xQueueSend(h_queue_spi, &msg, 0);
+
     	/* Print out: Wait 250mS */
-		//LOGGER_INFO(p_task_b_wait_250mS);
+		LOGGER_INFO(p_task_b_wait_250mS);
 		vTaskDelay(TASK_B_DEL_MAX);
 	}
 }

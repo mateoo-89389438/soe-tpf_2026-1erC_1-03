@@ -76,7 +76,8 @@ uint32_t g_app_stack_overflow_cnt;
 uint32_t g_tasks_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
-QueueHandle_t h_queue_spi_rx;
+QueueHandle_t h_queue_spi;
+
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
@@ -98,24 +99,22 @@ void app_init(void)
 
 	g_tasks_cnt = G_TASKS_CNT_INI;
 
-	/* Print out: Application Initialized
+	/* Print out: Application Initialized */
 	LOGGER_INFO(" ");
 	LOGGER_INFO("%s is running - Tick [mS] = %lu", GET_NAME(app_init), xTaskGetTickCount());
 
 	LOGGER_INFO(" %s is a %s", GET_NAME(app), p_app);
 	LOGGER_INFO(" %s is a %s", GET_NAME(app), p_app_);
 	LOGGER_INFO(" %s is a %s", GET_NAME(app), p_app__);
-	*/
 
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
      * be explicitly created.
 	 */
-	h_queue_spi_rx = xQueueCreate(5, sizeof(s_spi_msg_t));
-
+	h_queue_spi = xQueueCreate(10, sizeof(s_spi_msg_t));
 	 /* Check the queue or semaphore (binary or counting) or mutex was created
      * successfully.
      */
-	configASSERT(NULL != h_queue_spi_rx);
+	configASSERT(NULL != h_queue_spi);
      /* Add queue or semaphore (binary or counting) or mutex to registry. */
 
 	/* Add threads, ... */
@@ -144,12 +143,12 @@ void app_init(void)
     configASSERT(pdPASS == ret);
 
     /* Task Gatekeeper thread at priority 2 */
-	ret = xTaskCreate(task_gatekeeper,				/* Pointer to the function thats implement the task. */
+	ret = xTaskCreate(task_gatekeeper,					/* Pointer to the function thats implement the task. */
 					  "Task Gatekeeper",				/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE * 2),	/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
 					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 2. */
-					  &h_task_gatekeeper);			/* We are using a variable as task handle. */
+					  &h_task_gatekeeper);				/* We are using a variable as task handle. */
 
 	/* Check the thread was created successfully. */
 	configASSERT(pdPASS == ret);

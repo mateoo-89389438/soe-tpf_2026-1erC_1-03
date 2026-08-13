@@ -51,25 +51,28 @@
 #define TASK_A_DEL_ZERO		(pdMS_TO_TICKS(0ul))
 #define TASK_A_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
+#define KNOWN_LENGTH		3ul
+
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
-const char *p_task_a_send_req           = "   ==> Task    A - Sending SPI Request";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
 
 /********************** external functions definition ************************/
 /* Task thread */
 void task_a(void *parameters)
 {
-    s_spi_msg_t spi_req;
+   /*  Declare & Initialize Task Function variables */
+	g_task_a_cnt = G_TASK_A_CNT_INI;
 
-    /*  Declare & Initialize Task Function variables */
-    g_task_a_cnt = G_TASK_A_CNT_INI;
+	s_spi_msg_t *p_msg = NULL;
 
     /* Print out: Task Initialized */
     LOGGER_INFO(" ");
@@ -81,14 +84,14 @@ void task_a(void *parameters)
         /* Update Task Counter */
         g_task_a_cnt++;
 
-        /* Prepare message pointing strictly to the Global Memory Pool */
-        spi_req.p_data = g_spi_pool[0];
-        spi_req.size = 3; /* Expecting 3 bytes JEDEC ID: Manufacturer, Memory Type, Capacity */
+        if (xQueueReceive(h_queue_spi_pool, &p_msg, portMAX_DELAY) == pdPASS)
+		{
+        	/* Define how many bytes we want to receive */
+			p_msg->size = KNOWN_LENGTH;
 
-        LOGGER_INFO(p_task_a_send_req);
-
-        /* Post request to Gatekeeper Task Queue */
-        xQueueSend(h_queue_spi, &spi_req, portMAX_DELAY);
+			/* Send to the queue */
+			xQueueSend(h_queue_spi, &p_msg, 0ul);
+		}
 
         /* Print out: Wait 250mS */
         LOGGER_INFO(p_task_a_wait_250mS);

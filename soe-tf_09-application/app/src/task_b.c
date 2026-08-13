@@ -51,15 +51,19 @@
 #define TASK_B_DEL_ZERO		(pdMS_TO_TICKS(0ul))
 #define TASK_B_DEL_MAX		(pdMS_TO_TICKS(2500ul))
 
+#define KNOWN_LENGTH		4ul
+
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
 const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   2500mS";
+static uint8_t g_rx_buffer[KNOWN_LENGTH];
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
+extern QueueHandle_t h_queue_spi;
 
 /********************** external functions definition ************************/
 /* Task thread */
@@ -67,6 +71,8 @@ void task_b(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
+
+	s_spi_msg_t msg;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -77,6 +83,12 @@ void task_b(void *parameters)
     {
 		/* Update Task Counter */
 		g_task_b_cnt++;
+
+		msg.p_data = g_rx_buffer;
+		msg.size = sizeof(g_rx_buffer);
+
+		/* Send request to Gatekeeper */
+		xQueueSend(h_queue_spi, &msg, 0);
 
     	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_b_wait_250mS);

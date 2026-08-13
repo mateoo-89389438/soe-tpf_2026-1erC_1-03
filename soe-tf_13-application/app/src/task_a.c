@@ -44,8 +44,6 @@
 /* Application & Tasks includes */
 #include "board.h"
 #include "app.h"
-#include "app_it.h"
-#include "task_gatekeeper.h"
 
 /********************** macros and definitions *******************************/
 #define G_TASK_A_CNT_INI	0ul
@@ -53,11 +51,9 @@
 #define TASK_A_DEL_ZERO		(pdMS_TO_TICKS(0ul))
 #define TASK_A_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
-#define KNOWN_LENGTH 		4ul
+#define KNOWN_LENGTH		3ul
 
 /********************** internal data declaration ****************************/
-static uint8_t g_task_a_rx_buffer[KNOWN_LENGTH];
-static s_spi_msg_t g_task_a_msg;
 
 /********************** internal functions declaration ***********************/
 
@@ -66,35 +62,41 @@ const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
-extern QueueHandle_t h_queue_spi_rx;
+extern QueueHandle_t h_queue_spi;
+extern QueueHandle_t h_queue_spi_pool;
 
 /********************** external functions definition ************************/
 /* Task thread */
 void task_a(void *parameters)
 {
-	/*  Declare & Initialize Task Function variables */
+   /*  Declare & Initialize Task Function variables */
 	g_task_a_cnt = G_TASK_A_CNT_INI;
 
-	g_task_a_msg.p_data = g_task_a_rx_buffer;
-	g_task_a_msg.size = KNOWN_LENGTH;
+	s_spi_msg_t *p_msg = NULL;
 
-	/* Print out: Task Initialized */
-	LOGGER_INFO(" ");
-	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
+    /* Print out: Task Initialized */
+    LOGGER_INFO(" ");
+    LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
-	/* As per most tasks, this task is implemented in an infinite loop. */
-	for (;;)
-	{
-		/* Update Task Counter */
-		g_task_a_cnt++;
+    /* As per most tasks, this task is implemented in an infinite loop. */
+    for (;;)
+    {
+        /* Update Task Counter */
+        g_task_a_cnt++;
 
-		/* Send messege to Gatekeeper */
-		xQueueSend(h_queue_spi_rx, &g_task_a_msg, portMAX_DELAY);
+        if (xQueueReceive(h_queue_spi_pool, &p_msg, portMAX_DELAY) == pdPASS)
+		{
+        	/* Define how many bytes we want to receive */
+			p_msg->size = KNOWN_LENGTH;
 
-    	/* Print out: Wait 250mS */
-		LOGGER_INFO(p_task_a_wait_250mS);
-		vTaskDelay(TASK_A_DEL_MAX);
-	}
+			/* Send to the queue */
+			xQueueSend(h_queue_spi, &p_msg, 0ul);
+		}
+
+        /* Print out: Wait 250mS */
+        LOGGER_INFO(p_task_a_wait_250mS);
+        vTaskDelay(TASK_A_DEL_MAX);
+    }
 }
 
 /********************** end of file ******************************************/
